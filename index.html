@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>Tinfo Robot — Standby</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap");
+
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg: #060a12;
+        --surface: #0d1320;
+        --cyan: #00e0c6;
+        --blue: #2979ff;
+        --dim: #1e2d45;
+        --text: #c8d8f0;
+        --text-dim: #4a6080;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        background: var(--bg);
+        overflow: hidden;
+        font-family: "Space Grotesk", sans-serif;
+        color: var(--text);
+        touch-action: manipulation;
+      }
+
+      /* ── Ambient grid ── */
+      .grid-bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background-image:
+          linear-gradient(rgba(0, 224, 198, 0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 224, 198, 0.04) 1px, transparent 1px);
+        background-size: 48px 48px;
+        animation: grid-drift 20s linear infinite;
+      }
+      @keyframes grid-drift {
+        from {
+          background-position: 0 0;
+        }
+        to {
+          background-position: 48px 48px;
+        }
+      }
+
+      /* ── Glow orbs ── */
+      .orb {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(80px);
+        z-index: 0;
+        pointer-events: none;
+      }
+      .orb-1 {
+        width: 420px;
+        height: 420px;
+        background: radial-gradient(
+          circle,
+          rgba(0, 224, 198, 0.18),
+          transparent 70%
+        );
+        top: -100px;
+        left: -100px;
+        animation: orb-float 8s ease-in-out infinite alternate;
+      }
+      .orb-2 {
+        width: 320px;
+        height: 320px;
+        background: radial-gradient(
+          circle,
+          rgba(41, 121, 255, 0.14),
+          transparent 70%
+        );
+        bottom: -80px;
+        right: -80px;
+        animation: orb-float 11s ease-in-out infinite alternate-reverse;
+      }
+      @keyframes orb-float {
+        from {
+          transform: translate(0, 0);
+        }
+        to {
+          transform: translate(30px, 20px);
+        }
+      }
+
+      /* ── Main layout ── */
+      .screen {
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+        transition:
+          opacity 0.6s ease,
+          transform 0.6s ease;
+      }
+      .screen.hidden {
+        opacity: 0;
+        pointer-events: none;
+        transform: scale(1.04);
+      }
+
+      /* ── Robot face ── */
+      .robot-face {
+        position: relative;
+        width: 140px;
+        height: 140px;
+        margin-bottom: 36px;
+      }
+      .face-ring {
+        position: absolute;
+        inset: 0;
+        border-radius: 32px;
+        border: 2px solid var(--dim);
+        background: var(--surface);
+        box-shadow:
+          0 0 40px rgba(0, 224, 198, 0.1),
+          inset 0 0 20px rgba(0, 224, 198, 0.04);
+      }
+      .eyes {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+      }
+      .eye {
+        width: 28px;
+        height: 36px;
+        background: var(--cyan);
+        border-radius: 50%;
+        box-shadow:
+          0 0 16px var(--cyan),
+          0 0 32px rgba(0, 224, 198, 0.4);
+        animation: blink 4s ease-in-out infinite;
+        position: relative;
+      }
+      .eye::after {
+        content: "";
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: 50%;
+        top: 6px;
+        left: 6px;
+      }
+      .eye:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      @keyframes blink {
+        0%,
+        90%,
+        100% {
+          transform: scaleY(1);
+        }
+        95% {
+          transform: scaleY(0.08);
+        }
+      }
+
+      /* scan line on face */
+      .face-scan {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--cyan),
+          transparent
+        );
+        opacity: 0.5;
+        animation: face-scan 3s ease-in-out infinite;
+        border-radius: 1px;
+      }
+      @keyframes face-scan {
+        0% {
+          top: 20px;
+          opacity: 0;
+        }
+        20% {
+          opacity: 0.5;
+        }
+        80% {
+          opacity: 0.5;
+        }
+        100% {
+          top: 120px;
+          opacity: 0;
+        }
+      }
+
+      /* ── Text block ── */
+      .dept-label {
+        font-family: "Space Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 3px;
+        color: var(--cyan);
+        text-transform: uppercase;
+        margin-bottom: 12px;
+        opacity: 0.8;
+      }
+
+      .headline {
+        font-size: 38px;
+        font-weight: 700;
+        line-height: 1.1;
+        text-align: center;
+        color: #fff;
+        margin-bottom: 8px;
+      }
+      .headline span {
+        color: var(--cyan);
+      }
+
+      .sub {
+        font-size: 15px;
+        font-weight: 300;
+        color: var(--text-dim);
+        text-align: center;
+        margin-bottom: 52px;
+        letter-spacing: 0.3px;
+      }
+
+      /* ── Wake word prompt ── */
+      .wake-prompt {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .mic-ring {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        border: 2px solid var(--dim);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        background: var(--surface);
+      }
+      .mic-ring::before {
+        content: "";
+        position: absolute;
+        inset: -6px;
+        border-radius: 50%;
+        border: 1.5px solid rgba(0, 224, 198, 0.2);
+        animation: mic-pulse 2.5s ease-in-out infinite;
+      }
+      .mic-ring::after {
+        content: "";
+        position: absolute;
+        inset: -14px;
+        border-radius: 50%;
+        border: 1px solid rgba(0, 224, 198, 0.08);
+        animation: mic-pulse 2.5s ease-in-out infinite 0.4s;
+      }
+      @keyframes mic-pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.6;
+        }
+        50% {
+          transform: scale(1.12);
+          opacity: 1;
+        }
+      }
+      .mic-icon {
+        font-size: 26px;
+        line-height: 1;
+      }
+
+      .wake-text {
+        font-family: "Space Mono", monospace;
+        font-size: 13px;
+        text-align: center;
+        color: var(--text-dim);
+        line-height: 1.7;
+      }
+      .wake-text strong {
+        color: var(--cyan);
+        font-size: 15px;
+        display: block;
+        margin-top: 2px;
+      }
+
+      /* listening state */
+      .mic-ring.listening {
+        border-color: var(--cyan);
+        box-shadow: 0 0 20px rgba(0, 224, 198, 0.3);
+      }
+      .mic-ring.listening::before {
+        border-color: rgba(0, 224, 198, 0.5);
+        animation: mic-pulse-active 1s ease-in-out infinite;
+      }
+      .mic-ring.listening::after {
+        border-color: rgba(0, 224, 198, 0.25);
+        animation: mic-pulse-active 1s ease-in-out infinite 0.2s;
+      }
+      @keyframes mic-pulse-active {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.8;
+        }
+        50% {
+          transform: scale(1.18);
+          opacity: 1;
+        }
+      }
+
+      /* ── Status bar bottom ── */
+      .status-bar {
+        position: fixed;
+        bottom: 24px;
+        left: 0;
+        right: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-family: "Space Mono", monospace;
+        font-size: 11px;
+        color: var(--text-dim);
+        letter-spacing: 1px;
+        z-index: 20;
+      }
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--cyan);
+        box-shadow: 0 0 6px var(--cyan);
+        animation: dot-blink 2s ease-in-out infinite;
+      }
+      @keyframes dot-blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+
+      /* ── Transition overlay ── */
+      .transition-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        background: var(--bg);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s ease;
+      }
+      .transition-overlay.active {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      /* ── Touch hint ── */
+      .touch-hint {
+        position: fixed;
+        bottom: 56px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 11px;
+        color: var(--text-dim);
+        letter-spacing: 1px;
+        font-family: "Space Mono", monospace;
+        opacity: 0.5;
+      }
+
+      /* ── Error toast ── */
+      .toast {
+        position: fixed;
+        bottom: 90px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(255, 80, 80, 0.15);
+        border: 1px solid rgba(255, 80, 80, 0.4);
+        color: #ff8080;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-family: "Space Mono", monospace;
+        opacity: 0;
+        transition: opacity 0.3s;
+        z-index: 50;
+        white-space: nowrap;
+      }
+      .toast.show {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid-bg"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <!-- IDLE SCREEN -->
+    <div class="screen" id="idleScreen">
+      <div class="robot-face">
+        <div class="face-ring"></div>
+        <div class="eyes">
+          <div class="eye"></div>
+          <div class="eye"></div>
+        </div>
+        <div class="face-scan"></div>
+      </div>
+
+      <div class="dept-label">Departemen Teknologi Informasi · ITS</div>
+
+      <h1 class="headline">Hai, Aku <span>Tinfo</span>!</h1>
+      <p class="sub">Robot interaktif Departemen Teknologi Informasi</p>
+
+      <div class="wake-prompt">
+        <div class="mic-ring" id="micRing">
+          <span class="mic-icon">🎙️</span>
+        </div>
+        <div class="wake-text">
+          Ucapkan wake word untuk memulai
+          <strong>"Halo Tinfo"</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transition overlay -->
+    <div class="transition-overlay" id="overlay"></div>
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <div class="status-dot"></div>
+      <span id="statusText">MENDENGARKAN...</span>
+    </div>
+
+    <div class="touch-hint">atau sentuh layar untuk memulai</div>
+
+    <!-- Error toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+      const TARGET_URL = "http://10.4.89.139/";
+      const WAKE_WORDS = [
+        "halo tinfo",
+        "halo info",
+        "hello tinfo",
+        "halo tinfo",
+      ];
+      const IDLE_TIMEOUT = 2 * 60 * 1000; // 2 menit
+
+      const micRing = document.getElementById("micRing");
+      const statusText = document.getElementById("statusText");
+      const overlay = document.getElementById("overlay");
+      const toast = document.getElementById("toast");
+
+      let recognition = null;
+      let isListening = false;
+      let redirectTimer = null;
+
+      // ── Wake Lock (cegah layar mati) ──
+      async function requestWakeLock() {
+        try {
+          if ("wakeLock" in navigator) {
+            await navigator.wakeLock.request("screen");
+          }
+        } catch (e) {
+          /* tidak semua browser support */
+        }
+      }
+      requestWakeLock();
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") requestWakeLock();
+      });
+
+      // ── Speech Recognition ──
+      function initSpeech() {
+        const SpeechRecognition =
+          window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+          showToast("Browser tidak mendukung speech recognition");
+          statusText.textContent = "SENTUH LAYAR UNTUK MEMULAI";
+          return;
+        }
+
+        recognition = new SpeechRecognition();
+        recognition.lang = "id-ID";
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 3;
+
+        recognition.onstart = () => {
+          isListening = true;
+          micRing.classList.add("listening");
+          statusText.textContent = "MENDENGARKAN...";
+        };
+
+        recognition.onresult = (event) => {
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const result = event.results[i];
+            for (let j = 0; j < result.length; j++) {
+              const transcript = result[j].transcript.toLowerCase().trim();
+              if (WAKE_WORDS.some((w) => transcript.includes(w))) {
+                triggerWake();
+                return;
+              }
+            }
+          }
+        };
+
+        recognition.onerror = (e) => {
+          if (e.error === "not-allowed") {
+            showToast("Izin mikrofon diperlukan");
+            statusText.textContent =
+              "IZIN MIC DIBUTUHKAN · SENTUH UNTUK LANJUT";
+          }
+        };
+
+        recognition.onend = () => {
+          isListening = false;
+          micRing.classList.remove("listening");
+          // Auto restart
+          setTimeout(() => {
+            try {
+              recognition.start();
+            } catch (e) {}
+          }, 300);
+        };
+
+        try {
+          recognition.start();
+        } catch (e) {}
+      }
+
+      // ── Trigger: buka web utama ──
+      function triggerWake() {
+        if (recognition) {
+          try {
+            recognition.stop();
+          } catch (e) {}
+        }
+
+        micRing.classList.remove("listening");
+        statusText.textContent = "MEMBUKA...";
+
+        overlay.classList.add("active");
+        setTimeout(() => {
+          window.location.href = TARGET_URL;
+        }, 500);
+      }
+
+      // ── Idle timeout: kembali ke halaman ini ──
+      function resetIdleTimer() {
+        clearTimeout(redirectTimer);
+      }
+
+      // ── Toast helper ──
+      function showToast(msg, duration = 4000) {
+        toast.textContent = msg;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), duration);
+      }
+
+      // ── Touch / click fallback ──
+      document.addEventListener("click", triggerWake);
+      document.addEventListener("touchstart", triggerWake, { passive: true });
+
+      // ── Init ──
+      window.addEventListener("load", () => {
+        setTimeout(initSpeech, 800);
+      });
+    </script>
+
+    <!-- 
+  CARA PAKAI DI TABLET:
+  1. Buka file ini di Fully Kiosk Browser
+  2. Set file ini sebagai Start URL
+  3. Aktifkan Keep Screen On di settings Fully Kiosk
+  4. Ucapkan "Halo Tinfo" → otomatis buka web utama
+  5. Untuk kembali ke idle dari web utama, tambahkan tombol
+     yang mengarah ke file ini, atau gunakan idle timer di web utama
+-->
+  </body>
+</html>
