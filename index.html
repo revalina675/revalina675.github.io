@@ -431,12 +431,8 @@
     statusText.textContent = 'MENYAPA...';
     overlay.classList.add('active');
 
-    if (window.speechSynthesis.getVoices().length === 0) {
-      await new Promise(r => {
-        window.speechSynthesis.onvoiceschanged = r;
-        setTimeout(r, 1000);
-      });
-    }
+     await new Promise(r => setTimeout(r, 500));
+    window.speechSynthesis.cancel();
 
     await speak(GREETING_TEXT_ID, GREETING_ID);
     await speak(GREETING_TEXT_EN, GREETING_EN);
